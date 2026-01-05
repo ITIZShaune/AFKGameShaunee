@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Budget - Jason Reed</title>
+    <!-- Icône de l'onglet (Favicon) -->
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2910/2910203.png">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -67,6 +70,16 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .undo-btn-active {
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -113,19 +126,20 @@
                     <span id="currentDateDisplay" class="text-sm font-medium">--</span>
                 </div>
             </div>
-            <div class="flex gap-3">
+            <div class="flex flex-col items-end gap-1">
                 <div class="bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-lg border border-emerald-500/20 text-xs font-bold flex items-center gap-2">
                     <span class="relative flex h-2 w-2">
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
-                    Auto-génération active
+                    Report automatique actif
                 </div>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Report semaine précédente : <span id="carriedOverDisplay">0,00 €</span></p>
             </div>
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="glass-card p-7 rounded-[24px] relative overflow-hidden group">
                 <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Revenus semaine</p>
                 <div id="totalIncome" class="text-3xl font-bold text-emerald-400">0,00 €</div>
@@ -137,9 +151,17 @@
             </div>
 
             <div class="glass-card p-7 rounded-[24px] relative overflow-hidden border-primary/20 bg-primary/5 group">
-                <p class="text-slate-300 text-xs font-bold uppercase tracking-widest mb-2">Solde actuel</p>
+                <p class="text-slate-300 text-xs font-bold uppercase tracking-widest mb-2">Solde actuel (Total)</p>
                 <div id="netBalance" class="text-3xl font-black text-white">0,00 €</div>
             </div>
+        </div>
+
+        <!-- Undo Shortcut (New) -->
+        <div id="undoContainer" class="mb-12 flex justify-center opacity-0 pointer-events-none transition-all duration-300">
+            <button id="undoBtn" onclick="confirmUndo()" class="group bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                <span>Annuler la dernière opération</span>
+            </button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -168,7 +190,6 @@
                                 <option value="Facture Personnelle">Facture Personnelle</option>
                                 <option value="Autre">Autre...</option>
                             </select>
-                            <!-- Champ caché qui s'affiche si "Autre" est sélectionné -->
                             <input type="text" id="otherDescription" placeholder="Précisez la désignation..." class="hidden input-dark w-full px-4 py-3 rounded-xl focus:ring-primary">
                         </div>
 
@@ -260,8 +281,10 @@
         let appData = {
             currentBudgetId: '',
             currentThemeId: 'indigo',
-            budgets: {}
+            budgets: {} 
         };
+
+        let undoState = false;
 
         const getWeekNumber = (d) => {
             d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -276,6 +299,44 @@
             return `${year}-W${week}`;
         };
 
+        const calculateFinalBalance = (budgetId) => {
+            const budget = appData.budgets[budgetId];
+            if (!budget) return 0;
+            let total = budget.carriedOver || 0;
+            budget.transactions.forEach(t => {
+                if (t.type === 'income') total += t.amount;
+                else total -= t.amount;
+            });
+            return total;
+        };
+
+        const getPreviousWeekId = (currentId) => {
+            const ids = Object.keys(appData.budgets).sort((a, b) => b.localeCompare(a));
+            const currentIndex = ids.indexOf(currentId);
+            return ids[currentIndex + 1] || null;
+        };
+
+        const checkAndCreateWeeklyBudget = () => {
+            const currentId = getCurrentWeeklyId();
+            const [year, week] = getWeekNumber(new Date());
+            
+            if (!appData.budgets[currentId]) {
+                const prevId = getPreviousWeekId(currentId);
+                const carryOverValue = prevId ? calculateFinalBalance(prevId) : 0;
+
+                appData.budgets[currentId] = {
+                    name: `Semaine ${week} - ${year}`,
+                    transactions: [],
+                    carriedOver: carryOverValue,
+                    isAutoGenerated: true
+                };
+                showToast(`Report de ${carryOverValue.toFixed(2)}€ appliqué.`);
+            }
+            
+            appData.currentBudgetId = currentId;
+            saveData();
+        };
+
         const handleDesignationChange = () => {
             const select = document.getElementById('presetSelect');
             const otherInput = document.getElementById('otherDescription');
@@ -287,23 +348,6 @@
                 otherInput.required = false;
                 otherInput.value = '';
             }
-        };
-
-        const checkAndCreateWeeklyBudget = () => {
-            const currentId = getCurrentWeeklyId();
-            const [year, week] = getWeekNumber(new Date());
-            
-            if (!appData.budgets[currentId]) {
-                appData.budgets[currentId] = {
-                    name: `Semaine ${week} - ${year}`,
-                    transactions: [],
-                    isAutoGenerated: true
-                };
-                showToast(`Nouveau panneau généré pour S${week}`);
-            }
-            
-            appData.currentBudgetId = currentId;
-            saveData();
         };
 
         const loadData = () => {
@@ -376,11 +420,44 @@
             saveData();
         };
 
+        const confirmUndo = () => {
+            const btn = document.getElementById('undoBtn');
+            const span = btn.querySelector('pointer-events-none'); // Dummy selector to target text
+            
+            if (!undoState) {
+                undoState = true;
+                btn.classList.add('undo-btn-active', 'bg-rose-500', 'text-white');
+                btn.querySelector('span').innerText = "Confirmer l'annulation ?";
+                setTimeout(() => {
+                    if(undoState) resetUndoBtn();
+                }, 3000);
+            } else {
+                performUndo();
+            }
+        };
+
+        const resetUndoBtn = () => {
+            undoState = false;
+            const btn = document.getElementById('undoBtn');
+            btn.classList.remove('undo-btn-active', 'bg-rose-500', 'text-white');
+            btn.querySelector('span').innerText = "Annuler la dernière opération";
+        };
+
+        const performUndo = () => {
+            const budget = getActiveBudget();
+            if (budget.transactions.length > 0) {
+                budget.transactions.shift();
+                saveData();
+                showToast("Dernière opération annulée");
+            }
+            resetUndoBtn();
+        };
+
         const switchBudget = (id) => {
             appData.currentBudgetId = id;
             saveData();
             closeBudgetModal();
-            showToast(`Affichage : ${appData.budgets[id].name}`);
+            showToast(`Semaine : ${appData.budgets[id].name}`);
         };
 
         const toggleThemeModal = () => document.getElementById('themeModal').classList.toggle('hidden');
@@ -395,7 +472,7 @@
             const otherValue = document.getElementById('otherDescription').value;
             
             if (!selectValue) {
-                showToast("Veuillez choisir une désignation");
+                showToast("Choisir une désignation");
                 return;
             }
 
@@ -414,7 +491,6 @@
             const select = document.getElementById('presetSelect');
             const otherInput = document.getElementById('otherDescription');
             
-            // Vérifier si la description fait partie des options standards
             const standardOptions = Array.from(select.options).map(o => o.value);
             if (standardOptions.includes(t.description) && t.description !== 'Autre') {
                 select.value = t.description;
@@ -456,17 +532,29 @@
             if (!budget) return;
 
             document.getElementById('currentBudgetName').innerText = budget.name;
+            document.getElementById('carriedOverDisplay').innerText = (budget.carriedOver || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+
             let inc = 0, exp = 0;
             budget.transactions.forEach(t => t.type === 'income' ? inc += t.amount : exp += t.amount);
             
             document.getElementById('totalIncome').innerText = inc.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
             document.getElementById('totalExpenses').innerText = exp.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
-            const balance = inc - exp;
+            
+            const balance = (budget.carriedOver || 0) + inc - exp;
+            
             const balanceEl = document.getElementById('netBalance');
             balanceEl.innerText = balance.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
             balanceEl.className = `text-3xl font-black ${balance < 0 ? 'text-rose-400' : 'text-white'}`;
             
             document.getElementById('transCount').innerText = budget.transactions.length;
+
+            // Update Undo Button Visibility
+            const undoContainer = document.getElementById('undoContainer');
+            if (budget.transactions.length > 0) {
+                undoContainer.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                undoContainer.classList.add('opacity-0', 'pointer-events-none');
+            }
 
             const listEl = document.getElementById('transactionList');
             const emptyEl = document.getElementById('emptyState');
@@ -518,7 +606,10 @@
                             <div class="w-10 h-10 flex items-center justify-center rounded-lg ${active ? 'bg-primary text-white' : 'bg-slate-800 text-slate-500'}">
                                 <i data-lucide="calendar" class="w-5 h-5"></i>
                             </div>
-                            <span class="font-bold ${active ? 'text-white' : 'text-slate-300'}">${b.name}</span>
+                            <div>
+                                <span class="font-bold block ${active ? 'text-white' : 'text-slate-300'}">${b.name}</span>
+                                <span class="text-[10px] text-slate-500 font-bold uppercase">Solde : ${calculateFinalBalance(id).toLocaleString('fr-FR')} €</span>
+                            </div>
                         </div>
                         ${active ? `<i data-lucide="check-circle" class="text-primary w-5 h-5"></i>` : ''}
                     </div>
