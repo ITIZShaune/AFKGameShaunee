@@ -19,23 +19,21 @@
         .glow-text { text-shadow: 0 0 20px rgba(255, 255, 255, 0.2); }
         .abyss-gradient { background: radial-gradient(circle at center, #111 0%, #050505 100%); }
 
-        /* Styles pour les contrôles audio */
-        .audio-bar {
+        /* Interface Musique */
+        .music-panel {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 100;
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 12px;
-            border-radius: 16px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-        
-        input[type=range] { accent-color: #4f46e5; cursor: pointer; }
 
         .easter-egg {
             position: fixed;
@@ -70,9 +68,8 @@
         }
 
         .success-toast::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #4f46e5; }
-        
         .exp-container { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; overflow: hidden; }
-        .exp-fill { height: 100%; background: linear-gradient(90deg, #4f46e5, #818cf8); width: 0%; transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1); box-shadow: 0 0 10px rgba(79, 70, 229, 0.5); }
+        .exp-fill { height: 100%; background: linear-gradient(90deg, #4f46e5, #818cf8); width: 0%; transition: width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1); }
 
         @keyframes slide-in { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slide-out { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
@@ -83,14 +80,14 @@
 </head>
 <body class="abyss-gradient min-h-screen flex flex-col items-center justify-center p-4">
 
-    <div class="audio-bar">
-        <div class="flex items-center justify-between gap-6">
+    <div class="music-panel">
+        <div class="flex items-center justify-between gap-4">
             <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Ambiance</span>
-            <button onclick="toggleMusic()" id="music-toggle" class="text-[10px] uppercase tracking-widest border border-white/20 px-3 py-1 rounded-full hover:bg-white/10 transition">OFF</button>
+            <button onclick="toggleMusic()" id="music-btn" class="text-[10px] border border-white/20 px-2 py-1 rounded bg-white/5 hover:bg-white/10 transition">PLAY</button>
         </div>
         <div class="flex items-center gap-2">
             <span class="text-[10px] text-gray-500">VOL</span>
-            <input type="range" id="volume-control" min="0" max="1" step="0.05" value="0.3" oninput="updateMusicVolume(this.value)">
+            <input type="range" min="0" max="1" step="0.01" value="0.3" oninput="updateMusicVol(this.value)" class="w-24 accent-indigo-500">
         </div>
     </div>
 
@@ -120,12 +117,9 @@
             </div>
         </div>
 
-        <div class="relative group">
-            <div class="absolute -inset-1 bg-gradient-to-r from-gray-800 to-gray-700 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-            <div class="relative bg-black border border-white/10 w-64 h-64 md:w-80 md:h-80 rounded-full flex flex-col items-center justify-center shadow-2xl">
-                <span id="main-timer" class="text-4xl md:text-5xl font-bold mono">00:00:00</span>
-                <span class="text-xs uppercase tracking-widest text-gray-500 mt-2">Temps d'existence</span>
-            </div>
+        <div class="relative bg-black border border-white/10 w-64 h-64 md:w-80 md:h-80 rounded-full flex flex-col items-center justify-center shadow-2xl">
+            <span id="main-timer" class="text-4xl md:text-5xl font-bold mono">00:00:00</span>
+            <span class="text-xs uppercase tracking-widest text-gray-500 mt-2">Temps d'existence</span>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-2xl">
@@ -133,10 +127,10 @@
                 <p class="text-xs text-gray-400 uppercase">Easter Eggs Trouvés</p>
                 <p id="stat-eggs" class="text-2xl font-semibold mono">0 / 25</p>
             </div>
-            <div class="bg-white/5 border border-white/10 p-4 rounded-xl text-center flex flex-col items-center justify-center text-green-500">
+            <div class="bg-white/5 border border-white/10 p-4 rounded-xl text-center flex flex-col items-center justify-center">
                 <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 bg-current rounded-full animate-pulse"></div>
-                    <p class="text-xs uppercase">Connecté</p>
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <p class="text-xs text-gray-400 uppercase">Sauvegarde Active</p>
                 </div>
             </div>
             <div class="bg-white/5 border border-white/10 p-4 rounded-xl text-center">
@@ -159,77 +153,63 @@
     <div id="visual-effects"></div>
 
     <script>
-        // --- DONNÉES ---
+        // --- DONNÉES DU JEU ---
         const EASTER_EGGS = [
             { id: 1, name: "Une ombre passe...", chance: 1, color: "#9ca3af" },
             { id: 25, name: "L'Alpha et l'Oméga", chance: 0.0001, color: "#f8fafc" }
         ];
-
         const ACHIEVEMENTS = [
-            { id: 't_1m', name: "Nouveau-né", desc: "Exister 1 minute", req: (s) => s >= 60, chance: "100%" },
-            { id: 'l_10', name: "Entité Stable", desc: "Atteindre le niveau 10", req: (s, e, l) => l >= 10, chance: "Niveau" }
+            { id: 't_1m', name: "Nouveau-né", desc: "Exister 1 minute", req: (s) => s >= 60, chance: "100%" }
         ];
 
         let gameState = { secondsPassed: 0, foundEggs: [], achievements: [], soundEnabled: true, level: 1, currentExp: 0 };
-        let audioCtx = null;
-        let musicNodes = [];
-        let musicActive = false;
-        let mainGainNode = null;
+        
+        // --- AUDIO ENGINE (MUSIQUE & SFX) ---
+        let audioCtx = null, musicGain = null, musicActive = false, oscillators = [];
 
-        // --- MOTEUR AUDIO (AMBANCE) ---
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                mainGainNode = audioCtx.createGain();
-                mainGainNode.connect(audioCtx.destination);
-                mainGainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                musicGain = audioCtx.createGain();
+                musicGain.connect(audioCtx.destination);
+                musicGain.gain.value = 0.3;
             }
         }
 
         function toggleMusic() {
             initAudio();
             if (!musicActive) {
-                const freqs = [55, 82.41, 110]; // A1, E2, A2 (Accords de base)
-                freqs.forEach(f => {
-                    const osc = audioCtx.createOscillator();
-                    const g = audioCtx.createGain();
-                    osc.type = 'sine';
+                [55, 110, 164.81].forEach(f => {
+                    let osc = audioCtx.createOscillator();
+                    let g = audioCtx.createGain();
                     osc.frequency.value = f;
-                    g.gain.setValueAtTime(0, audioCtx.currentTime);
-                    g.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 2);
-                    osc.connect(g);
-                    g.connect(mainGainNode);
-                    osc.start();
-                    musicNodes.push({ osc, g });
+                    g.gain.value = 0;
+                    g.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 2);
+                    osc.connect(g); g.connect(musicGain);
+                    osc.start(); oscillators.push({osc, g});
                 });
                 musicActive = true;
-                document.getElementById('music-toggle').textContent = "ON";
-                document.getElementById('music-toggle').classList.add('bg-indigo-500/20');
+                document.getElementById('music-btn').textContent = "STOP";
             } else {
-                musicNodes.forEach(n => {
-                    n.g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
-                    setTimeout(() => n.osc.stop(), 1000);
+                oscillators.forEach(o => {
+                    o.g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+                    setTimeout(() => o.osc.stop(), 1000);
                 });
-                musicNodes = [];
-                musicActive = false;
-                document.getElementById('music-toggle').textContent = "OFF";
-                document.getElementById('music-toggle').classList.remove('bg-indigo-500/20');
+                oscillators = []; musicActive = false;
+                document.getElementById('music-btn').textContent = "PLAY";
             }
         }
 
-        function updateMusicVolume(val) {
-            if (mainGainNode) mainGainNode.gain.setTargetAtTime(val, audioCtx.currentTime, 0.1);
-        }
+        function updateMusicVol(v) { if(musicGain) musicGain.gain.setTargetAtTime(v, audioCtx.currentTime, 0.1); }
 
-        function playDiscoverySound(rarity) {
+        function playDiscoverySound(r) {
             if (!gameState.soundEnabled) return;
             initAudio();
-            const osc = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
-            osc.connect(g); g.connect(audioCtx.destination);
-            osc.frequency.setValueAtTime(220 + (1/rarity), audioCtx.currentTime);
+            let osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+            osc.frequency.setValueAtTime(220 + (1/r), audioCtx.currentTime);
             g.gain.setValueAtTime(0.1, audioCtx.currentTime);
             g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5);
+            osc.connect(g); g.connect(audioCtx.destination);
             osc.start(); osc.stop(audioCtx.currentTime + 1.5);
         }
 
@@ -238,72 +218,49 @@
             document.getElementById('sound-toggle').textContent = `Sons : ${gameState.soundEnabled ? 'Activés' : 'Désactivés'}`;
         }
 
-        // --- LOGIQUE JEU ---
-        function getExpRequired(l) { return Math.floor(100 * Math.pow(1.2, l - 1)); }
-
-        function addExp(amt) {
-            gameState.currentExp += amt;
-            let req = getExpRequired(gameState.level);
-            if (gameState.currentExp >= req) {
-                gameState.currentExp -= req;
-                gameState.level++;
-                onLevelUp();
-            }
-            updateExpUI();
+        // --- SYSTÈME DE SAUVEGARDE ---
+        function save() { localStorage.setItem('abysse_save', JSON.stringify(gameState)); }
+        function load() {
+            const saved = localStorage.getItem('abysse_save');
+            if (saved) gameState = { ...gameState, ...JSON.parse(saved) };
         }
 
-        function onLevelUp() {
-            notify('Niveau Supérieur', `Vous êtes niveau ${gameState.level}`, '#fbbf24');
-            playDiscoverySound(0.5);
-        }
-
-        function updateExpUI() {
-            const req = getExpRequired(gameState.level);
-            document.getElementById('level-display').textContent = gameState.level;
-            document.getElementById('exp-current').textContent = Math.floor(gameState.currentExp);
-            document.getElementById('exp-next').textContent = req;
-            document.getElementById('exp-bar').style.width = `${(gameState.currentExp/req)*100}%`;
-        }
-
-        function notify(title, name, color) {
-            const toast = document.createElement('div');
-            toast.className = 'success-toast';
-            toast.style.borderLeftColor = color;
-            toast.innerHTML = `<div class="flex flex-col"><span class="text-[10px] uppercase text-gray-500 font-bold">${title}</span><span class="text-lg font-bold">${name}</span></div>`;
-            document.getElementById('notifications-container').appendChild(toast);
-            setTimeout(() => { toast.style.animation = 'slide-out 0.5s forwards'; setTimeout(() => toast.remove(), 500); }, 3000);
-        }
-
+        // --- LOGIQUE CORE ---
         function updateUI() {
             const h = Math.floor(gameState.secondsPassed / 3600).toString().padStart(2, '0');
             const m = Math.floor((gameState.secondsPassed % 3600) / 60).toString().padStart(2, '0');
             const s = (gameState.secondsPassed % 60).toString().padStart(2, '0');
             document.getElementById('main-timer').textContent = `${h}:${m}:${s}`;
-            document.getElementById('stat-eggs').textContent = `${gameState.foundEggs.length} / ${EASTER_EGGS.length}`;
+            
+            let req = Math.floor(100 * Math.pow(1.2, gameState.level - 1));
+            document.getElementById('level-display').textContent = gameState.level;
+            document.getElementById('exp-current').textContent = Math.floor(gameState.currentExp);
+            document.getElementById('exp-next').textContent = req;
+            document.getElementById('exp-bar').style.width = `${(gameState.currentExp/req)*100}%`;
+            document.getElementById('stat-eggs').textContent = `${gameState.foundEggs.length} / 25`;
         }
 
         setInterval(() => {
             gameState.secondsPassed++;
-            addExp(1);
-            updateUI();
-            if (gameState.secondsPassed % 5 === 0) {
-                EASTER_EGGS.forEach(egg => {
-                    if (!gameState.foundEggs.includes(egg.id) && Math.random()*100 < egg.chance) {
-                        gameState.foundEggs.push(egg.id);
-                        addExp(50);
-                        notify('Easter Egg', egg.name, egg.color);
-                        playDiscoverySound(egg.chance);
-                    }
-                });
+            gameState.currentExp += 1;
+            let req = Math.floor(100 * Math.pow(1.2, gameState.level - 1));
+            if(gameState.currentExp >= req) { 
+                gameState.currentExp -= req; 
+                gameState.level++; 
+                playDiscoverySound(0.5); 
             }
+            updateUI();
+            if (gameState.secondsPassed % 5 === 0) save();
         }, 1000);
 
         function switchTab(t) {
             document.getElementById('tab-achievements').classList.toggle('hidden', t !== 'achievements');
             document.getElementById('tab-eggs').classList.toggle('hidden', t !== 'eggs');
+            document.getElementById('btn-achievements').classList.toggle('bg-white/10', t === 'achievements');
+            document.getElementById('btn-eggs').classList.toggle('bg-white/10', t === 'eggs');
         }
 
-        window.onload = () => { updateExpUI(); updateUI(); };
+        window.onload = () => { load(); updateUI(); };
     </script>
 </body>
 </html>
