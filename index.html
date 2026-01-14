@@ -172,7 +172,7 @@
             let req = Math.floor(100 * Math.pow(1.2, gameState.level - 1));
             if(gameState.currentExp >= req) { gameState.currentExp = 0; gameState.level++; renderLists(); }
             updateUI();
-            if (gameState.secondsPassed % 5 === 0) save();
+            if (gameState.secondsPassed % 1 === 0) save();
         }, 1000);
 
         function switchTab(t) {
