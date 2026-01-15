@@ -22,6 +22,7 @@
             height: 100vh;
         }
 
+        /* --- BACKGROUND LOGIC --- */
         #bg-canvas {
             position: fixed;
             top: 0;
@@ -54,6 +55,7 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
         }
 
+        /* --- EXPERIENCE BAR --- */
         .exp-container {
             width: 100%;
             height: 4px;
@@ -75,11 +77,12 @@
             box-shadow: 0 0 60px -15px rgba(99, 102, 241, 0.15);
         }
 
+        /* --- MODAL SYSTEM --- */
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
             z-index: 50;
             display: flex;
             align-items: center;
@@ -101,6 +104,7 @@
             border-radius: 10px;
         }
 
+        /* --- ANIMATIONS --- */
         @keyframes level-up {
             0% { transform: scale(1); filter: brightness(1); }
             50% { transform: scale(1.05); filter: brightness(1.5) drop-shadow(0 0 20px var(--accent)); }
@@ -127,14 +131,14 @@
     <div class="nebula"></div>
 
     <!-- Interface Principale -->
-    <div id="app" class="relative z-10 w-full max-w-4xl h-full flex flex-col items-center justify-center gap-12 p-6">
+    <div id="app" class="relative z-10 w-full max-w-4xl h-full flex flex-col items-center justify-center gap-10 p-6">
         
         <header class="text-center space-y-3">
             <h1 class="text-4xl md:text-6xl font-extralight tracking-[0.2em] text-white opacity-90 uppercase">L'Abysse du Vide</h1>
             <p class="text-indigo-300/50 text-xs tracking-widest uppercase mono">Laisse le temps s'écouler dans le néant</p>
         </header>
 
-        <!-- Niveau & Progress -->
+        <!-- Niveau & Progrès -->
         <div class="w-full max-w-md space-y-4">
             <div class="flex justify-between items-end px-1">
                 <div class="flex flex-col">
@@ -175,7 +179,7 @@
             </div>
         </div>
 
-        <!-- Boutons de Menu -->
+        <!-- Navigation par Boutons (Modales) -->
         <div class="flex gap-4">
             <button onclick="openModal('achievements')" class="glass-panel px-8 py-3 rounded-full text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-white/5 transition-all">
                 Succès
@@ -191,7 +195,7 @@
         <div class="glass-panel w-full max-w-xl max-h-[80vh] m-4 rounded-3xl overflow-hidden flex flex-col">
             <div class="p-6 border-b border-white/5 flex justify-between items-center">
                 <h2 class="text-xs uppercase tracking-[0.3em] font-bold text-indigo-300">Succès Déverrouillés</h2>
-                <button onclick="closeModal('achievements')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-all text-xl">&times;</button>
+                <button onclick="closeModal('achievements')" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-all text-2xl">&times;</button>
             </div>
             <div id="list-achievements" class="p-6 overflow-y-auto custom-scrollbar grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
         </div>
@@ -202,7 +206,7 @@
         <div class="glass-panel w-full max-w-xl max-h-[80vh] m-4 rounded-3xl overflow-hidden flex flex-col">
             <div class="p-6 border-b border-white/5 flex justify-between items-center">
                 <h2 class="text-xs uppercase tracking-[0.3em] font-bold text-indigo-300">Fragments du Néant</h2>
-                <button onclick="closeModal('eggs')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-all text-xl">&times;</button>
+                <button onclick="closeModal('eggs')" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/5 text-white/40 hover:text-white transition-all text-2xl">&times;</button>
             </div>
             <div id="list-eggs" class="p-6 overflow-y-auto custom-scrollbar grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
         </div>
@@ -211,7 +215,7 @@
     <div id="notifications-container"></div>
 
     <script>
-        // --- LOGIQUE FOND ---
+        // --- ANIMATION FOND ---
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -242,7 +246,7 @@
         window.addEventListener('resize', resize);
         resize(); createStars(); animate();
 
-        // --- DONNÉES ---
+        // --- DATA ---
         const EASTER_EGGS = [
             { id: 1, name: "Une ombre passe...", chance: 1, color: "#94a3b8" },
             { id: 2, name: "Un murmure lointain", chance: 0.5, color: "#cbd5e1" },
@@ -294,7 +298,7 @@
         let isNotificationActive = false;
         let audioCtx = null;
 
-        // --- FONCTIONS JEU ---
+        // --- CORE LOGIC ---
         function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
         function playSound(rarity) {
             if (!gameState.soundEnabled) return;
@@ -337,9 +341,9 @@
             document.getElementById('exp-bar').style.width = `${(gameState.currentExp / currentReq) * 100}%`;
         }
 
-        function save() { localStorage.setItem('abysse_save', JSON.stringify(gameState)); }
+        function save() { localStorage.setItem('abysse_save_v2', JSON.stringify(gameState)); }
         function load() {
-            const saved = localStorage.getItem('abysse_save');
+            const saved = localStorage.getItem('abysse_save_v2') || localStorage.getItem('abysse_save');
             if (saved) { try { gameState = { ...gameState, ...JSON.parse(saved) }; } catch(e) {} }
             updateExpUI(); updateUI(); renderLists();
         }
@@ -355,7 +359,7 @@
             if (lastEggId) {
                 const egg = EASTER_EGGS.find(e => e.id === lastEggId);
                 const el = document.getElementById('stat-rarity');
-                el.textContent = egg.chance + "%"; // Affiche la rareté
+                el.textContent = egg.chance + "%"; // Rarity Display
                 el.style.color = egg.color;
             }
         }
@@ -432,14 +436,17 @@
             }, 3500);
         }
 
-        // --- MODALES ---
+        // --- MODAL CONTROLS ---
         window.openModal = (id) => { document.getElementById('modal-' + id).classList.add('active'); };
         window.closeModal = (id) => { document.getElementById('modal-' + id).classList.remove('active'); };
 
         window.onload = () => {
             load();
             setInterval(() => {
-                gameState.secondsPassed++; addExp(1); updateUI(); checkAchievements();
+                gameState.secondsPassed++; 
+                addExp(1); 
+                updateUI(); 
+                checkAchievements();
                 if (gameState.secondsPassed % 5 === 0) save();
             }, 1000);
             setInterval(checkEasterEggs, 5000);
