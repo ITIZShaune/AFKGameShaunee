@@ -4,7 +4,7 @@
 Plongez dans un univers sombre et mystérieux où votre progression continue même lorsque vous êtes absent.
 
 🔗 **Lien du jeu :**  
-👉 https://itizshaune.github.io/AFKGameShaunee/
+👉 [Cliquez ici !](https://itizshaune.github.io/L-Abysse-du-Vide-Afk-Experience/)
 
 ---
 
