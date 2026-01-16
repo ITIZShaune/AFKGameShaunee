@@ -69,6 +69,14 @@
             opacity: 0.4;
         }
 
+        /* --- FIX BOUTONS NAVIGATION --- */
+        .tab-btn {
+            cursor: pointer;
+            position: relative;
+            z-index: 60;
+            transition: all 0.2s ease;
+        }
+
         .tab-btn.active {
             color: white;
             border-bottom: 2px solid var(--accent-primary);
@@ -107,23 +115,10 @@
             opacity: 0.6;
         }
         
-        .ach-card.locked .ach-icon {
-            background: rgba(255,255,255,0.03);
-            border: 1px dashed rgba(255,255,255,0.1);
-            color: transparent;
-        }
-
         .ach-card.unlocked {
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%);
             border-color: rgba(99, 102, 241, 0.3);
             box-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.05);
-        }
-
-        .ach-card.unlocked .ach-icon {
-            background: rgba(99, 102, 241, 0.2);
-            border: 1px solid rgba(99, 102, 241, 0.5);
-            color: #818cf8;
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
         }
 
         .ach-icon {
@@ -148,10 +143,6 @@
             line-height: 1.4;
             margin-top: 2px;
             color: #94a3b8;
-        }
-
-        .unlocked .ach-desc {
-            color: #cbd5e1;
         }
 
         .talent-card {
@@ -195,22 +186,6 @@
             margin-top: 4px;
         }
 
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
-            50% { box-shadow: 0 0 25px rgba(168, 85, 247, 0.6); }
-        }
-
-        @keyframes pulse-ring {
-            0%, 100% { 
-                transform: scale(1);
-                opacity: 0.3;
-            }
-            50% { 
-                transform: scale(1.05);
-                opacity: 0.1;
-            }
-        }
-
         .particle {
             position: absolute;
             border-radius: 50%;
@@ -220,20 +195,10 @@
         }
 
         @keyframes float-particle {
-            0% {
-                transform: translateY(0) translateX(0);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100vh) translateX(var(--drift));
-                opacity: 0;
-            }
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(var(--drift)); opacity: 0; }
         }
     </style>
 </head>
@@ -288,17 +253,15 @@
                 <div id="exp-bar" class="exp-fill"></div>
             </div>
             <div class="flex justify-between text-[8px] md:text-[9px] uppercase tracking-widest text-slate-400">
-                <span>Talents: <span id="talent-points" class="text-indigo-300">0</span> PT</span>
+                <span>Points de Talent: <span id="talent-points" class="text-indigo-300">0</span></span>
                 <span>Anomalies: <span id="stat-anomalies" class="text-white">0</span></span>
             </div>
         </div>
 
         <div class="relative group">
             <div id="timer-glow" class="absolute -inset-12 md:-inset-20 bg-indigo-600/10 rounded-full blur-[80px] md:blur-[120px] transition-all duration-1000"></div>
-            <div class="absolute -inset-8 md:-inset-16 bg-purple-600/5 rounded-full blur-[60px] md:blur-[100px] animate-pulse"></div>
-            <div class="relative w-64 h-64 md:w-80 md:h-80 rounded-full flex flex-col items-center justify-center float-anim border-2 border-white/10 bg-gradient-to-br from-white/5 via-indigo-500/5 to-purple-500/5 shadow-2xl" style="box-shadow: 0 0 60px rgba(99, 102, 241, 0.2), inset 0 0 40px rgba(99, 102, 241, 0.05);">
-                <div class="absolute inset-0 rounded-full border border-white/5" style="animation: pulse-ring 3s ease-in-out infinite;"></div>
-                <span id="main-timer" class="text-4xl md:text-5xl font-extralight mono tracking-tighter text-white" style="text-shadow: 0 0 20px rgba(255,255,255,0.3);">00:00:00</span>
+            <div class="relative w-64 h-64 md:w-80 md:h-80 rounded-full flex flex-col items-center justify-center float-anim border-2 border-white/10 bg-gradient-to-br from-white/5 via-indigo-500/5 to-purple-500/5 shadow-2xl">
+                <span id="main-timer" class="text-4xl md:text-5xl font-extralight mono tracking-tighter text-white">00:00:00</span>
                 <span class="text-[9px] md:text-[10px] uppercase tracking-[0.5em] text-slate-300 mt-5">Existence</span>
             </div>
         </div>
@@ -313,26 +276,46 @@
             <div id="tab-achievements" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar"></div>
             
             <div id="tab-talents" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="glass talent-card p-5 rounded-2xl space-y-4 flex flex-col justify-between">
+                <div class="glass talent-card p-5 rounded-2xl space-y-4 flex flex-col justify-between border-t-2 border-indigo-500/20">
                     <div>
-                        <h3 class="talent-title text-indigo-400 uppercase">Éternité</h3>
+                        <div class="flex justify-between items-start">
+                            <h3 class="talent-title text-indigo-400 uppercase">Éternité</h3>
+                            <span id="lv-xp" class="mono text-[10px] text-indigo-300">Lv. 0</span>
+                        </div>
                         <p class="talent-info mt-2">Augmente la génération d'expérience passive du Vide.</p>
                     </div>
-                    <button onclick="buyTalent('xp')" id="t-xp" class="talent-btn w-full py-3 glass-hover border border-white/10 rounded-lg text-[10px] text-white disabled:opacity-20 transition-all"></button>
+                    <button onclick="buyTalent('xp')" id="t-xp" class="talent-btn w-full py-3 glass-hover border border-white/10 rounded-lg text-[10px] text-white disabled:opacity-20 transition-all flex flex-col items-center">
+                        <span>Améliorer</span>
+                        <span class="text-[8px] text-indigo-300">-1 Point-</span>
+                    </button>
                 </div>
-                <div class="glass talent-card p-5 rounded-2xl space-y-4 flex flex-col justify-between">
+
+                <div class="glass talent-card p-5 rounded-2xl space-y-4 flex flex-col justify-between border-t-2 border-purple-500/20">
                     <div>
-                        <h3 class="talent-title text-purple-400 uppercase">Observation</h3>
+                        <div class="flex justify-between items-start">
+                            <h3 class="talent-title text-purple-400 uppercase">Observation</h3>
+                            <span id="lv-eggs" class="mono text-[10px] text-purple-300">Lv. 0</span>
+                        </div>
                         <p class="talent-info mt-2">Affine vos sens pour trouver des reliques plus facilement.</p>
                     </div>
-                    <button onclick="buyTalent('eggs')" id="t-eggs" class="talent-btn w-full py-3 glass-hover border border-white/10 rounded-lg text-[10px] text-white disabled:opacity-20 transition-all"></button>
+                    <button onclick="buyTalent('eggs')" id="t-eggs" class="talent-btn w-full py-3 glass-hover border border-white/10 rounded-lg text-[10px] text-white disabled:opacity-20 transition-all flex flex-col items-center">
+                        <span>Améliorer</span>
+                        <span class="text-[8px] text-purple-300">-1 Point-</span>
+                    </button>
                 </div>
-                <div class="glass talent-card p-5 rounded-2xl space-y-4 flex flex-col justify-between">
+
+                <div class="glass talent-card p-5 rounded-2xl space-y-4 flex flex-col justify-between border-t-2 border-emerald-500/20">
                     <div>
-                        <h3 class="talent-title text-emerald-400 uppercase">Fortune</h3>
+                        <div class="flex justify-between items-start">
+                            <h3 class="talent-title text-emerald-400 uppercase">Fortune</h3>
+                            <span id="lv-fortune" class="mono text-[10px] text-emerald-300">Lv. 0</span>
+                        </div>
                         <p class="talent-info mt-2">Perturbe le continuum pour attirer plus d'anomalies.</p>
                     </div>
-                    <button onclick="buyTalent('fortune')" id="t-fortune" class="talent-btn w-full py-3 glass-hover border border-white/10 rounded-lg text-[10px] text-white disabled:opacity-20 transition-all"></button>
+                    <button onclick="buyTalent('fortune')" id="t-fortune" class="talent-btn w-full py-3 glass-hover border border-white/10 rounded-lg text-[10px] text-white disabled:opacity-20 transition-all flex flex-col items-center">
+                        <span>Améliorer</span>
+                        <span class="text-[8px] text-emerald-300">-1 Point-</span>
+                    </button>
                 </div>
             </div>
 
@@ -375,30 +358,9 @@
             { id: 't_1m', name: "Nouveau-né", desc: "Exister pendant au moins 1 minute.", req: (s) => s >= 60 },
             { id: 't_10m', name: "Contemplateur", desc: "Exister pendant au moins 10 minutes.", req: (s) => s >= 600 },
             { id: 't_1h', name: "Patient", desc: "Exister pendant au moins 1 heure.", req: (s) => s >= 3600 },
-            { id: 't_24h', name: "L'Immuable", desc: "Exister pendant 24 heures cumulées.", req: (s) => s >= 86400 },
             { id: 'l_10', name: "Ascension", desc: "Atteindre le Niveau 10.", req: (s, e, l) => l >= 10 },
-            { id: 'fast_lv', name: "Flash", desc: "Atteindre le Niveau 20.", req: (s, e, l) => l >= 20 },
-            { id: 'l_50', name: "Souverain de l'Infini", desc: "Atteindre le Niveau 50.", req: (s, e, l) => l >= 50 },
-            { id: 'l_100', name: "Demi-Dieu", desc: "Atteindre le Niveau 100.", req: (s, e, l) => l >= 100 },
-            { id: 'l_250', name: "Entité Pure", desc: "Atteindre le Niveau 250.", req: (s, e, l) => l >= 250 },
             { id: 'e_1', name: "L'éveil", desc: "Trouver votre première relique.", req: (s, e) => e.length >= 1 },
-            { id: 'e_5', name: "Collectionneur", desc: "Trouver 5 reliques différentes.", req: (s, e) => e.length >= 5 },
-            { id: 'e_15', name: "Archéologue du Vide", desc: "Trouver 15 reliques différentes.", req: (s, e) => e.length >= 15 },
-            { id: 'e_all', name: "Omniscience", desc: "Trouver toutes les reliques (25).", req: (s, e) => e.length >= 25 },
-            { id: 'ano_1', name: "Chasseur de Failles", desc: "Capturer une anomalie temporelle.", req: (s, e, l, r, a) => a >= 1 },
-            { id: 'click_master', name: "Réactivité", desc: "Capturer 10 anomalies temporelles.", req: (s, e, l, r, a) => a >= 10 },
-            { id: 'ano_50', name: "Intercepteur", desc: "Capturer 50 anomalies temporelles.", req: (s, e, l, r, a) => a >= 50 },
-            { id: 'ano_100', name: "Gardien des Réalités", desc: "Capturer 100 anomalies temporelles.", req: (s, e, l, r, a) => a >= 100 },
-            { id: 'res_1', name: "Le Grand Saut", desc: "Effectuer votre première résonance.", req: (s, e, l, r) => r >= 1 },
-            { id: 'res_5', name: "Fréquence Stable", desc: "Effectuer 5 résonances.", req: (s, e, l, r) => r >= 5 },
-            { id: 'res_10', name: "Maître de l'Abysse", desc: "Effectuer 10 résonances.", req: (s, e, l, r) => r >= 10 },
-            { id: 'res_25', name: "Éternel Retour", desc: "Effectuer 25 résonances.", req: (s, e, l, r) => r >= 25 },
-            { id: 'frag_10', name: "Éclats de Pouvoir", desc: "Cumuler 10 Fragments de Vide.", req: (s, e, l, r, a, f) => f >= 10 },
-            { id: 'frag_100', name: "Richesse Absolue", desc: "Cumuler 100 Fragments de Vide.", req: (s, e, l, r, a, f) => f >= 100 },
-            { id: 'rich_start', name: "Héritage", desc: "Posséder 50 fragments simultanément.", req: (s, e, l, r, a, f) => f >= 50 },
-            { id: 'tal_1', name: "Apprenti", desc: "Améliorer un talent.", req: (s, e, l, r, a, f, t) => (t.xp + t.eggs + t.fortune) >= 1 },
-            { id: 'tal_max', name: "Spécialiste", desc: "Monter un talent au niveau 10.", req: (s, e, l, r, a, f, t) => t.xp >= 10 || t.eggs >= 10 || t.fortune >= 10 },
-            { id: 'complete', name: "L'Abysse vous salue", desc: "Débloquer un total de 20 succès.", req: (s, e, l, r, a, f, t, ach) => ach >= 20 }
+            { id: 'ano_1', name: "Chasseur", desc: "Capturer une anomalie.", req: (s, e, l, r, a) => a >= 1 }
         ];
 
         let gameState = {
@@ -407,8 +369,6 @@
             talents: { xp: 0, eggs: 0, fortune: 0 },
             fragments: 0, prestigeCount: 0, anomaliesCaught: 0
         };
-
-        let audioCtx = null;
 
         function init() {
             load();
@@ -435,13 +395,6 @@
             setInterval(checkEasterEggs, 5000);
         }
 
-        function hardReset() {
-            if (confirm("🚨 ATTENTION : Voulez-vous vraiment effacer TOUTE votre progression ?")) {
-                localStorage.removeItem('abysse_exp_v3');
-                location.reload();
-            }
-        }
-
         function addExp(amount) {
             gameState.currentExp += amount;
             let nextReq = Math.floor(100 * Math.pow(1.2, gameState.level - 1));
@@ -461,14 +414,74 @@
             if (gameState.level >= 50) document.getElementById('prestige-zone').classList.remove('hidden');
         }
 
+        function switchTab(tab) {
+            ['achievements', 'talents', 'eggs'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).classList.remove('active');
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`nav-${tab}`).classList.add('active');
+            if (tab === 'talents') updateTalentUI();
+        }
+
+        function updateTalentUI() {
+            for (let id in gameState.talents) {
+                const btn = document.getElementById(`t-${id}`);
+                const lvDisplay = document.getElementById(`lv-${id}`);
+                const lv = gameState.talents[id];
+                
+                if (lvDisplay) lvDisplay.textContent = `Lv. ${lv}`;
+                if (btn) btn.disabled = gameState.talentPoints < 1;
+            }
+            document.getElementById('talent-points').textContent = gameState.talentPoints;
+        }
+
+        function buyTalent(id) {
+            if (gameState.talentPoints >= 1) {
+                gameState.talentPoints--; 
+                gameState.talents[id]++;
+                updateTalentUI(); 
+                updateExpUI(); 
+                save();
+            }
+        }
+
+        function updateExpUI() {
+            const nextReq = Math.floor(100 * Math.pow(1.2, gameState.level - 1));
+            document.getElementById('exp-bar').style.width = `${(gameState.currentExp / nextReq) * 100}%`;
+            document.getElementById('exp-current').textContent = Math.floor(gameState.currentExp);
+            document.getElementById('exp-next').textContent = nextReq;
+            document.getElementById('level-display').textContent = gameState.level;
+            document.getElementById('talent-points').textContent = gameState.talentPoints;
+        }
+
+        function updateUI() {
+            const h = Math.floor(gameState.secondsPassed / 3600).toString().padStart(2, '0');
+            const m = Math.floor((gameState.secondsPassed % 3600) / 60).toString().padStart(2, '0');
+            const s = (gameState.secondsPassed % 60).toString().padStart(2, '0');
+            document.getElementById('main-timer').textContent = `${h}:${m}:${s}`;
+            
+            if (gameState.prestigeCount > 0 || gameState.fragments > 0) {
+                document.getElementById('prestige-stats').classList.remove('hidden');
+                document.getElementById('fragments-count').textContent = gameState.fragments;
+                document.getElementById('res-count').textContent = gameState.prestigeCount;
+                document.getElementById('multiplier-display').textContent = (1 + gameState.fragments * 0.1).toFixed(1);
+            }
+            if (gameState.level >= 50) document.getElementById('prestige-zone').classList.remove('hidden');
+        }
+
+        function maybeSpawnAnomaly() {
+            let chance = 0.1 * (1 + (gameState.talents.fortune * 0.3));
+            if (Math.random() < chance) spawnAnomaly();
+        }
+
         function spawnAnomaly() {
             const anomaly = document.createElement('div');
             anomaly.className = 'anomaly';
             anomaly.style.left = `${Math.random() * 70 + 15}%`;
             anomaly.style.top = `${Math.random() * 70 + 15}%`;
             
-            const handleCapture = (e) => {
-                e.stopPropagation();
+            anomaly.onclick = () => {
                 const xpGain = gameState.level * 25;
                 addExp(xpGain);
                 gameState.anomaliesCaught++;
@@ -476,17 +489,9 @@
                 anomaly.remove();
                 queueNotification('Anomalie', `+${Math.floor(xpGain)} XP`, '#fff', 'Énergie extraite');
             };
-
-            anomaly.onclick = handleCapture;
-            anomaly.ontouchstart = (e) => { e.preventDefault(); handleCapture(e); };
             
             document.body.appendChild(anomaly);
             setTimeout(() => { if(anomaly.parentNode) anomaly.remove(); }, 6000);
-        }
-
-        function maybeSpawnAnomaly() {
-            let chance = 0.1 * (1 + (gameState.talents.fortune * 0.3));
-            if (Math.random() < chance) spawnAnomaly();
         }
 
         function checkEasterEggs() {
@@ -504,34 +509,22 @@
         }
 
         function checkAchievements() {
-            let anyNew = false;
             ACHIEVEMENTS.forEach(ach => {
                 if (!gameState.achievements.includes(ach.id)) {
-                    if (ach.req(
-                        gameState.totalSeconds, 
-                        gameState.foundEggs, 
-                        gameState.level, 
-                        gameState.prestigeCount, 
-                        gameState.anomaliesCaught, 
-                        gameState.fragments, 
-                        gameState.talents,
-                        gameState.achievements.length
-                    )) {
+                    if (ach.req(gameState.totalSeconds, gameState.foundEggs, gameState.level, gameState.prestigeCount, gameState.anomaliesCaught)) {
                         gameState.achievements.push(ach.id);
                         addExp(100);
-                        anyNew = true;
+                        renderAchievements();
                         queueNotification('Succès', ach.name, '#4f46e5', ach.desc);
                     }
                 }
             });
-            if (anyNew) renderAchievements();
         }
 
         function prestige() {
             if (gameState.level < 50) return;
             const fragmentsToGain = Math.floor(gameState.level / 10);
-            if (!window.confirm(`Résonance : Réinitialiser pour ${fragmentsToGain} Fragments ?`)) return; 
-            
+            if (!confirm(`Résonance : Réinitialiser pour ${fragmentsToGain} Fragments ?`)) return; 
             gameState.fragments += fragmentsToGain;
             gameState.prestigeCount++;
             gameState.level = 1; gameState.currentExp = 0; gameState.secondsPassed = 0;
@@ -539,87 +532,12 @@
             save(); location.reload();
         }
 
-        function switchTab(tab) {
-            ['achievements', 'talents', 'eggs'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden');
-                document.getElementById(`nav-${t}`).classList.remove('active');
-            });
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
-            document.getElementById(`nav-${tab}`).classList.add('active');
-        }
-
-        function queueNotification(title, name, color, extra) {
-            const container = document.getElementById('notifications-container');
-            const toast = document.createElement('div');
-            toast.className = 'glass p-4 rounded-2xl border-l-4 transition-all duration-500 transform translate-x-full min-w-[200px] shadow-2xl';
-            toast.style.borderLeftColor = color;
-            toast.innerHTML = `<div class="flex flex-col"><span class="text-[8px] uppercase tracking-widest text-slate-400">${title}</span><span class="text-[11px] font-bold text-white">${name}</span><span class="text-[9px] text-slate-400 mt-0.5 italic">${extra}</span></div>`;
-            container.appendChild(toast);
-            
-            setTimeout(() => toast.classList.remove('translate-x-full'), 100);
-            if (gameState.soundEnabled) playTone();
-            
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
-                setTimeout(() => toast.remove(), 500);
-            }, 4000);
-        }
-
-        function playTone() {
-            try {
-                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                
-                const osc = audioCtx.createOscillator();
-                const g = audioCtx.createGain();
-                osc.connect(g); g.connect(audioCtx.destination);
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
-                g.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-            } catch(e) {}
-        }
-
-        function updateUI() {
-            const h = Math.floor(gameState.secondsPassed / 3600).toString().padStart(2, '0');
-            const m = Math.floor((gameState.secondsPassed % 3600) / 60).toString().padStart(2, '0');
-            const s = (gameState.secondsPassed % 60).toString().padStart(2, '0');
-            document.getElementById('main-timer').textContent = `${h}:${m}:${s}`;
-            
-            if (gameState.prestigeCount > 0 || gameState.fragments > 0) {
-                document.getElementById('prestige-stats').classList.remove('hidden');
-                document.getElementById('fragments-count').textContent = gameState.fragments;
-                document.getElementById('res-count').textContent = gameState.prestigeCount;
-                document.getElementById('multiplier-display').textContent = (1 + gameState.fragments * 0.1).toFixed(1);
-            }
-            if (gameState.level >= 50) document.getElementById('prestige-zone').classList.remove('hidden');
-            else document.getElementById('prestige-zone').classList.add('hidden');
-        }
-
-        function updateExpUI() {
-            const nextReq = Math.floor(100 * Math.pow(1.2, gameState.level - 1));
-            document.getElementById('exp-bar').style.width = `${(gameState.currentExp / nextReq) * 100}%`;
-            document.getElementById('exp-current').textContent = Math.floor(gameState.currentExp);
-            document.getElementById('exp-next').textContent = nextReq;
-            document.getElementById('level-display').textContent = gameState.level;
-            document.getElementById('talent-points').textContent = gameState.talentPoints;
-        }
-
         function renderAchievements() {
             document.getElementById('tab-achievements').innerHTML = ACHIEVEMENTS.map(ach => {
                 const done = gameState.achievements.includes(ach.id);
-                return `<div class="ach-card glass p-4 md:p-5 rounded-xl flex items-center gap-4 md:gap-5 ${done ? 'unlocked' : 'locked'}">
-                    <div class="ach-icon">
-                        ${done ? '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-center mb-1">
-                            <h4 class="ach-title uppercase truncate pr-2">${ach.name}</h4>
-                            ${done ? '<div class="h-1.5 w-1.5 rounded-full bg-indigo-400"></div>' : ''}
-                        </div>
-                        <p class="ach-desc">${ach.desc}</p>
-                    </div>
+                return `<div class="ach-card glass p-4 rounded-xl flex items-center gap-4 ${done ? 'unlocked' : 'locked'}">
+                    <div class="ach-icon">${done ? '✓' : '?'}</div>
+                    <div><h4 class="ach-title">${ach.name}</h4><p class="ach-desc">${ach.desc}</p></div>
                 </div>`;
             }).join('');
         }
@@ -628,90 +546,45 @@
             document.getElementById('tab-eggs').innerHTML = EASTER_EGGS.map(egg => {
                 const found = gameState.foundEggs.includes(egg.id);
                 return `<div class="glass egg-card p-4 rounded-xl text-center flex flex-col items-center gap-2 ${found ? 'found' : 'opacity-40'}">
-                    <div class="w-6 h-6 rounded-full" style="background:${found ? egg.color : '#222'}; box-shadow: 0 0 15px ${found ? egg.color : 'transparent'};"></div>
-                    <span class="egg-name uppercase ${found ? 'text-slate-100' : 'text-slate-500'}">${found ? egg.name : 'Mystère'}</span>
-                    ${found ? '<span class="text-[7px] text-indigo-400 font-bold uppercase tracking-tighter mt-1">Acquis</span>' : ''}
+                    <div class="w-6 h-6 rounded-full" style="background:${found ? egg.color : '#222'}; shadow: 0 0 10px ${found ? egg.color : 'transparent'};"></div>
+                    <span class="egg-name uppercase">${found ? egg.name : 'Mystère'}</span>
                 </div>`;
             }).join('');
-        }
-
-        function updateTalentUI() {
-            for (let id in gameState.talents) {
-                const btn = document.getElementById(`t-${id}`);
-                const lv = gameState.talents[id];
-                btn.innerHTML = `<span class="block mb-0.5 opacity-60">Niveau ${lv}</span><span class="text-indigo-200">+${(lv+1)*20}% Efficacité</span>`;
-                btn.disabled = gameState.talentPoints < 1;
-            }
-        }
-
-        function buyTalent(id) {
-            if (gameState.talentPoints >= 1) {
-                gameState.talentPoints--; gameState.talents[id]++;
-                updateTalentUI(); updateExpUI(); save();
-            }
         }
 
         function toggleSound() {
             gameState.soundEnabled = !gameState.soundEnabled;
             document.getElementById('sound-toggle').textContent = `Audio: ${gameState.soundEnabled ? 'Activé' : 'Désactivé'}`;
-            if(gameState.soundEnabled && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         }
+
+        function queueNotification(title, name, color, extra) {
+            const container = document.getElementById('notifications-container');
+            const toast = document.createElement('div');
+            toast.className = 'glass p-4 rounded-2xl border-l-4 transition-all duration-500 transform translate-x-full min-w-[200px] shadow-2xl';
+            toast.style.borderLeftColor = color;
+            toast.innerHTML = `<div class="flex flex-col"><span class="text-[8px] uppercase tracking-widest text-slate-400">${title}</span><span class="text-[11px] font-bold text-white">${name}</span><span class="text-[9px] text-slate-400 mt-0.5">${extra}</span></div>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-x-full'), 100);
+            setTimeout(() => { toast.classList.add('translate-x-full', 'opacity-0'); setTimeout(() => toast.remove(), 500); }, 4000);
+        }
+
+        function hardReset() { if (confirm("🚨 Effacer TOUTE la progression ?")) { localStorage.removeItem('abysse_exp_v3'); location.reload(); } }
+        function save() { localStorage.setItem('abysse_exp_v3', JSON.stringify(gameState)); }
+        function load() { const s = localStorage.getItem('abysse_exp_v3'); if (s) gameState = { ...gameState, ...JSON.parse(s) }; }
 
         const canvas = document.getElementById('canvas-bg');
         const ctx = canvas.getContext('2d');
         let particles = [];
         function initParticles() {
-            canvas.width = window.innerWidth; 
-            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             particles = [];
-            const count = window.innerWidth < 768 ? 60 : 120;
-            for(let i=0; i<count; i++) particles.push({ 
-                x: Math.random()*canvas.width, 
-                y: Math.random()*canvas.height, 
-                s: Math.random()*2.5 + 0.5, 
-                v: Math.random()*0.5 + 0.2,
-                opacity: Math.random()*0.5 + 0.2
-            });
+            for(let i=0; i<80; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2, v: Math.random()*0.5 });
         }
         function drawParticles() {
             ctx.clearRect(0,0,canvas.width,canvas.height);
-            particles.forEach(p => {
-                ctx.globalAlpha = p.opacity;
-                ctx.fillStyle = "white";
-                ctx.beginPath(); 
-                ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); 
-                ctx.fill();
-                p.y -= p.v; 
-                if(p.y < -10) {
-                    p.y = canvas.height + 10;
-                    p.x = Math.random() * canvas.width;
-                }
-            });
+            ctx.fillStyle = "white";
+            particles.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill(); p.y -= p.v; if(p.y < 0) p.y = canvas.height; });
             requestAnimationFrame(drawParticles);
-        }
-
-        function createFloatingParticle() {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            const size = Math.random() * 4 + 2;
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            particle.style.left = `${Math.random() * 100}%`;
-            particle.style.bottom = '-10px';
-            particle.style.setProperty('--drift', `${(Math.random() - 0.5) * 100}px`);
-            particle.style.animation = `float-particle ${Math.random() * 15 + 10}s linear`;
-            document.body.appendChild(particle);
-            particle.addEventListener('animationend', () => particle.remove());
-        }
-
-        setInterval(() => {
-            if (Math.random() < 0.3) createFloatingParticle();
-        }, 500);
-
-        function save() { localStorage.setItem('abysse_exp_v3', JSON.stringify(gameState)); }
-        function load() {
-            const s = localStorage.getItem('abysse_exp_v3');
-            if (s) gameState = { ...gameState, ...JSON.parse(s) };
         }
 
         window.addEventListener('resize', initParticles);
